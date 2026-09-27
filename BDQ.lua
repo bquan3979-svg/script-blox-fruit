@@ -3,18 +3,11 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 local VirtualUser = game:GetService("VirtualUser")
-local Lighting = game:GetService("Lighting")
-local CollectionService = game:GetService("CollectionService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui", 5)
 local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
 -- Safe Globals
 _G.AutoLevel = false
@@ -24,8 +17,6 @@ _G.AutoBone = false
 _G.AutoRandomBone = false
 _G.TweenToKitsune = false
 _G.CollectAzure = false
-_G.AutoYama = false
-_G.AutoBoss = false
 _G.SelectWeapon = "Melee"
 
 -- Executor Check
@@ -42,89 +33,162 @@ if executor then
     end
 end
 
--- Load LinoriaLib (Banana Style)
+-- Tải Thư viện UI LinoriaLib (Dark Theme Style)
 local success, Library = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/Library.lua"))()
 end)
 if not success or not Library then
-    warn("Lỗi tải LinoriaLib")
+    warn("Lỗi tải thư viện LinoriaLib")
     return
 end
 
 local Window = Library:CreateWindow({
-    Title = "BDQ Hub | Banana Style Version",
+    Title = "BDQ Hub - Blox Fruit (Dark Edition)",
     Center = true,
     AutoShow = true,
     TabPadding = 8,
     MenuFadeTime = 0.2
 })
 
--- Custom UI Wrapper (Adapting Linoria to Tab standard)
-local function wrapTab(rawTab)
-    local currentLeft = rawTab:AddLeftGroupbox("Cài Đặt Chức Năng")
-    local currentRight = rawTab:AddRightGroupbox("Tùy Chọn Khác")
-    local sideToggle = false
-
-    local wrapped = {}
-    function wrapped:AddSection(name)
-        sideToggle = not sideToggle
-        if sideToggle then
-            currentLeft = rawTab:AddLeftGroupbox(name or " ")
-            return currentLeft
-        else
-            currentRight = rawTab:AddRightGroupbox(name or " ")
-            return currentRight
-        end
-    end
-
-    function wrapped:AddToggle(id, config)
-        local target = sideToggle and currentLeft or currentRight
-        return target:AddToggle(id, {
-            Text = config.Title or id,
-            Default = config.Default or false,
-            Callback = config.Callback or function() end
+-- Thiết lập Màu Đen (Dark Theme Style)
+pcall(function()
+    if Library.SetTheme then
+        Library:SetTheme({
+            Background         = Color3.fromRGB(18, 18, 18),
+            Accent             = Color3.fromRGB(45, 45, 45),
+            PrimaryText        = Color3.fromRGB(240, 240, 240),
+            SecondaryText      = Color3.fromRGB(160, 160, 160),
+            Divider            = Color3.fromRGB(35, 35, 35),
+            Header             = Color3.fromRGB(25, 25, 25),
+            Box                = Color3.fromRGB(28, 28, 28),
+            Button             = Color3.fromRGB(35, 35, 35),
+            Hover              = Color3.fromRGB(50, 50, 50),
+            Toggle             = Color3.fromRGB(255, 255, 255),
+            ToggleBackground   = Color3.fromRGB(30, 30, 30),
+            Dropdown           = Color3.fromRGB(28, 28, 28),
+            DropdownBackground = Color3.fromRGB(20, 20, 20),
+            Scrollbar          = Color3.fromRGB(60, 60, 60),
+            Outline            = Color3.fromRGB(40, 40, 40),
+            Shadow             = Color3.fromRGB(0, 0, 0),
         })
     end
+end)
 
-    function wrapped:AddDropdown(id, config)
-        local target = sideToggle and currentLeft or currentRight
-        return target:AddDropdown(id, {
-            Values = config.Values or {},
-            Default = config.Default or 1,
-            Multi = false,
-            Text = config.Title or id,
-            Callback = config.Callback or function() end
-        })
-    end
-
-    function wrapped:AddButton(config)
-        local target = sideToggle and currentLeft or currentRight
-        return target:AddButton({
-            Text = config.Title or "Button",
-            Func = config.Callback or function() end
-        })
-    end
-
-    return wrapped
-end
-
--- Tabs Config
+-- Tạo các Tab danh mục bên trái (Left Sidebar Tabs)
 local Tabs = {
-    Info = wrapTab(Window:AddTab("Thông Tin")),
-    Main = wrapTab(Window:AddTab("Farm Level")),
-    Sea = wrapTab(Window:AddTab("Sự Kiện")),
-    Item = wrapTab(Window:AddTab("Vật Phẩm")),
-    Stats = wrapTab(Window:AddTab("Chỉ Số")),
-    Teleport = wrapTab(Window:AddTab("Dịch Chuyển")),
-    Fruit = wrapTab(Window:AddTab("Trái Ác Quỷ")),
-    Misc = wrapTab(Window:AddTab("Khác")),
+    Main     = Window:AddTab("Farming"),
+    Item     = Window:AddTab("Get and Upgrade Items"),
+    Sea      = Window:AddTab("Sea Event"),
+    Fruit    = Window:AddTab("Fruit and Raid"),
+    Stats    = Window:AddTab("Stats"),
+    Teleport = Window:AddTab("Teleport"),
+    Info     = Window:AddTab("Information"),
 }
 
--- Watermark (Banana Hub Style)
+-- 1. TAB FARMING
+local FarmGroup = Tabs.Main:AddLeftGroupbox("Auto Farm Settings")
+
+FarmGroup:AddDropdown("SelectWeapon", {
+    Values = { "Melee", "Sword", "Blox Fruit" },
+    Default = 1,
+    Multi = false,
+    Text = "Select Weapon",
+    Callback = function(v)
+        _G.SelectWeapon = v
+    end
+})
+
+FarmGroup:AddToggle("ToggleAutoLevel", {
+    Text = "Auto Farm Level",
+    Default = false,
+    Callback = function(v)
+        _G.AutoLevel = v
+    end
+})
+
+FarmGroup:AddToggle("ToggleFastAttack", {
+    Text = "Fast Attack",
+    Default = true,
+    Callback = function(v)
+        _G.FastAttack = v
+    end
+})
+
+FarmGroup:AddToggle("ToggleBringMob", {
+    Text = "Bring Mobs",
+    Default = true,
+    Callback = function(v)
+        _G.BringMob = v
+    end
+})
+
+-- 2. TAB GET AND UPGRADE ITEMS
+local ItemGroup = Tabs.Item:AddLeftGroupbox("Items & Upgrades")
+
+if game.PlaceId == 7449423635 then -- Sea 3
+    ItemGroup:AddToggle("ToggleRandomBone", {
+        Text = "Auto Random Bone",
+        Default = false,
+        Callback = function(v)
+            _G.AutoRandomBone = v
+        end
+    })
+end
+
+-- 3. TAB SEA EVENT
+local SeaGroup = Tabs.Sea:AddLeftGroupbox("Kitsune Island")
+
+if game.PlaceId == 7449423635 then -- Sea 3
+    SeaGroup:AddToggle("ToggleKitsuneTP", {
+        Text = "Tween To Kitsune Island",
+        Default = false,
+        Callback = function(v)
+            _G.TweenToKitsune = v
+        end
+    })
+
+    SeaGroup:AddToggle("ToggleAzure", {
+        Text = "Collect Azure Ember",
+        Default = false,
+        Callback = function(v)
+            _G.CollectAzure = v
+        end
+    })
+
+    SeaGroup:AddButton({
+        Text = "Kitsune Statue Pray",
+        Func = function()
+            pcall(function()
+                ReplicatedStorage.Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
+            end)
+        end
+    })
+end
+
+-- 4. TAB INFORMATION
+local InfoGroup = Tabs.Info:AddLeftGroupbox("BDQ Hub Socials")
+
+InfoGroup:AddButton({
+    Text = "Copy Discord Link",
+    Func = function()
+        setclipboard("https://dsc.gg/nopermc")
+        Library:Notify("Đã copy link Discord vào bộ nhớ tạm!")
+    end
+})
+
+InfoGroup:AddButton({
+    Text = "Copy Youtube Link",
+    Func = function()
+        setclipboard("https://youtube.com/@nopermc")
+        Library:Notify("Đã copy link Youtube vào bộ nhớ tạm!")
+    end
+})
+
+-- WATERMARK (FPS & PING)
 local FrameTimer = tick()
 local FrameCounter = 0
 local FPS = 60
-local Watermark = Library:SetWatermark("BDQ Hub | Banana Style | FPS: 60 | Ping: 0ms")
+Library:SetWatermark("BDQ Hub Dark | FPS: 60 | Ping: 0ms")
 
 RunService.RenderStepped:Connect(function()
     FrameCounter = FrameCounter + 1
@@ -133,18 +197,11 @@ RunService.RenderStepped:Connect(function()
         FrameCounter = 0
         FrameTimer = tick()
         local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-        Library:SetWatermark(string.format("BDQ Hub | Banana Style | FPS: %d | Ping: %dms", FPS, ping))
+        Library:SetWatermark(string.format("BDQ Hub Dark | FPS: %d | Ping: %dms", FPS, ping))
     end
 end)
 
--- Anti-AFK
-Players.LocalPlayer.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-end)
-
--- Core Functions (Banana Standard)
+-- CORE FUNCTIONS
 local function AutoHaki()
     local char = Player.Character
     if char and not char:FindFirstChild("HasBuso") then
@@ -190,7 +247,6 @@ local function FastAttack()
     end)
 end
 
--- Bring Mob (Banana Feature)
 local function BringMobs(targetPos)
     if not _G.BringMob then return end
     for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
@@ -204,56 +260,7 @@ local function BringMobs(targetPos)
     end
 end
 
--- Tween Flight
-local function TweenTo(targetCFrame)
-    local char = Player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    local distance = (targetCFrame.Position - hrp.Position).Magnitude
-    local speed = 300
-    local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
-    tween:Play()
-end
-
--- TAB: MAIN (FARM LEVEL)
-local FarmSection = Tabs.Main:AddSection("Tùy Chọn Cày Cấp")
-
-Tabs.Main:AddDropdown("SelectWeapon", {
-    Title = "Chọn Vũ Khí Farm",
-    Values = { "Melee", "Sword", "Blox Fruit" },
-    Default = 1,
-    Callback = function(v)
-        _G.SelectWeapon = v
-    end
-})
-
-Tabs.Main:AddToggle("ToggleAutoLevel", {
-    Title = "Tự Động Cày Cấp (Auto Level)",
-    Default = false,
-    Callback = function(v)
-        _G.AutoLevel = v
-    end
-})
-
-Tabs.Main:AddToggle("ToggleFastAttack", {
-    Title = "Đánh Nhanh (Fast Attack)",
-    Default = true,
-    Callback = function(v)
-        _G.FastAttack = v
-    end
-})
-
-Tabs.Main:AddToggle("ToggleBringMob", {
-    Title = "Gom Quái Lại Gần (Bring Mobs)",
-    Default = true,
-    Callback = function(v)
-        _G.BringMob = v
-    end
-})
-
--- Auto Level Loop
+-- AUTO FARM LOOP
 task.spawn(function()
     while task.wait(0.1) do
         if _G.AutoLevel then
@@ -262,19 +269,15 @@ task.spawn(function()
                 EquipWeapon(_G.SelectWeapon)
 
                 local enemies = Workspace.Enemies:GetChildren()
-                local hasTarget = false
-
                 for _, enemy in pairs(enemies) do
                     local hum = enemy:FindFirstChild("Humanoid")
                     local hrp = enemy:FindFirstChild("HumanoidRootPart")
                     if hum and hrp and hum.Health > 0 then
-                        hasTarget = true
                         repeat
                             task.wait()
                             AutoHaki()
                             EquipWeapon(_G.SelectWeapon)
                             
-                            -- Giữ khoảng cách farm an toàn phía trên quái (Banana Style)
                             Player.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 20, 0) * CFrame.Angles(math.rad(-90), 0, 0)
                             
                             BringMobs(hrp.Position)
@@ -287,74 +290,13 @@ task.spawn(function()
     end
 end)
 
--- TAB: SEA EVENTS (KITSUNE / BONE)
-if game.PlaceId == 7449423635 then -- Sea 3
-    Tabs.Sea:AddSection("Sự Kiện Đảo Cáo (Kitsune Island)")
+-- ANTI-AFK & NOCLIP
+Players.LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
 
-    Tabs.Sea:AddToggle("ToggleKitsuneTP", {
-        Title = "Bay Đến Đảo Cáo",
-        Default = false,
-        Callback = function(v)
-            _G.TweenToKitsune = v
-        end
-    })
-
-    Tabs.Sea:AddToggle("ToggleAzure", {
-        Title = "Tự Nhặt Linh Hồn Azure",
-        Default = false,
-        Callback = function(v)
-            _G.CollectAzure = v
-        end
-    })
-
-    Tabs.Sea:AddButton({
-        Title = "Đổi Linh Hồn Lấy Quà (Kitsune Pray)",
-        Callback = function()
-            pcall(function()
-                ReplicatedStorage.Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
-            end)
-        end
-    })
-
-    Tabs.Main:AddSection("Cày Xương (Bone Farm)")
-    Tabs.Main:AddToggle("ToggleRandomBone", {
-        Title = "Tự Động Random Xương",
-        Default = false,
-        Callback = function(v)
-            _G.AutoRandomBone = v
-        end
-    })
-
-    task.spawn(function()
-        while task.wait(0.5) do
-            if _G.AutoRandomBone then
-                pcall(function()
-                    ReplicatedStorage.Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
-                end)
-            end
-        end
-    end)
-end
-
--- TAB: INFO
-Tabs.Info:AddSection("Cộng Đồng & Hỗ Trợ")
-Tabs.Info:AddButton({
-    Title = "Copy Link Discord BDQ",
-    Callback = function()
-        setclipboard("https://dsc.gg/nopermc")
-        Library:Notify({ Title = "Success", Description = "Đã copy link Discord!", Duration = 3 })
-    end
-})
-
-Tabs.Info:AddButton({
-    Title = "Kênh Youtube BDQ Hub",
-    Callback = function()
-        setclipboard("https://youtube.com/@nopermc")
-        Library:Notify({ Title = "Success", Description = "Đã copy link Youtube!", Duration = 3 })
-    end
-})
-
--- NoClip Engine (Xử lý bay qua địa hình)
 RunService.Stepped:Connect(function()
     if _G.AutoLevel or _G.TweenToKitsune or _G.CollectAzure then
         local char = Player.Character
@@ -368,9 +310,5 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Bật thông báo hoàn tất
-Library:Notify({
-    Title = "BDQ Hub x Banana",
-    Description = "Script loaded thành công! Nhấn 'H' để Ẩn/Hiện Menu.",
-    Duration = 5
-})
+-- THÔNG BÁO TẢI THÀNH CÔNG
+Library:Notify("BDQ Hub - Dark Theme đã tải thành công!")
