@@ -1,133 +1,77 @@
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local VirtualUser = game:GetService("VirtualUser")
+-- Tải thư viện RedzLib V2 (Thư viện chuẩn của Banana Hub)
+local RedzLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/REDzHUB/RedzLibV2/main/NewUi.lua"))()
 
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui", 5)
-local Character = Player.Character or Player.CharacterAdded:Wait()
+-- Tạo Window chính
+local Window = RedzLib:MakeWindow({
+    Title = "BDQ Hub - Blox Fruit",
+    SubTitle = "Banana Style Edition",
+    SaveFolder = "BDQ_Hub_Config"
+})
+
+-- Tạo các Tab bên menu trái (sidebar)
+local TabMain = Window:MakeTab({"Farming", "rbxassetid://10723407097"})
+local TabItem = Window:MakeTab({"Get & Upgrade Items", "rbxassetid://10709782845"})
+local TabSea  = Window:MakeTab({"Sea Event", "rbxassetid://10709782230"})
+local TabFruit = Window:MakeTab({"Fruit & Raid", "rbxassetid://10709782522"})
+local TabStats = Window:MakeTab({"Stats", "rbxassetid://10709782136"})
+local TabTele  = Window:MakeTab({"Teleport", "rbxassetid://10709781919"})
+local TabInfo  = Window:MakeTab({"Information", "rbxassetid://10709783103"})
 
 -- Safe Globals
 _G.AutoLevel = false
 _G.FastAttack = false
 _G.BringMob = false
-_G.AutoBone = false
 _G.AutoRandomBone = false
 _G.TweenToKitsune = false
 _G.CollectAzure = false
 _G.SelectWeapon = "Melee"
 
--- Executor Check
-local executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor())
-if executor then
-    local lower = string.lower(executor)
-    local accepted = string.find(lower, "bunni") or string.find(lower, "fluxus") or string.find(lower, "delta") or
-                     string.find(lower, "arceus") or string.find(lower, "xeno") or string.find(lower, "swift") or
-                     string.find(lower, "awp") or string.find(lower, "volcano") or string.find(lower, "argon") or
-                     string.find(lower, "macsploit") or string.find(lower, "potassium") or string.find(lower, "codex") or
-                     string.find(lower, "velocity") or string.find(lower, "romix") or string.find(lower, "neutron")
-    if not accepted then
-        Player:Kick("[BDQ Hub]: Executor không được hỗ trợ!")
-    end
-end
-
--- Tải Thư viện UI LinoriaLib (Dark Theme Style)
-local success, Library = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/Library.lua"))()
-end)
-if not success or not Library then
-    warn("Lỗi tải thư viện LinoriaLib")
-    return
-end
-
-local Window = Library:CreateWindow({
-    Title = "BDQ Hub - Blox Fruit (Dark Edition)",
-    Center = true,
-    AutoShow = true,
-    TabPadding = 8,
-    MenuFadeTime = 0.2
-})
-
--- Thiết lập Màu Đen (Dark Theme Style)
-pcall(function()
-    if Library.SetTheme then
-        Library:SetTheme({
-            Background         = Color3.fromRGB(18, 18, 18),
-            Accent             = Color3.fromRGB(45, 45, 45),
-            PrimaryText        = Color3.fromRGB(240, 240, 240),
-            SecondaryText      = Color3.fromRGB(160, 160, 160),
-            Divider            = Color3.fromRGB(35, 35, 35),
-            Header             = Color3.fromRGB(25, 25, 25),
-            Box                = Color3.fromRGB(28, 28, 28),
-            Button             = Color3.fromRGB(35, 35, 35),
-            Hover              = Color3.fromRGB(50, 50, 50),
-            Toggle             = Color3.fromRGB(255, 255, 255),
-            ToggleBackground   = Color3.fromRGB(30, 30, 30),
-            Dropdown           = Color3.fromRGB(28, 28, 28),
-            DropdownBackground = Color3.fromRGB(20, 20, 20),
-            Scrollbar          = Color3.fromRGB(60, 60, 60),
-            Outline            = Color3.fromRGB(40, 40, 40),
-            Shadow             = Color3.fromRGB(0, 0, 0),
-        })
-    end
-end)
-
--- Tạo các Tab danh mục bên trái (Left Sidebar Tabs)
-local Tabs = {
-    Main     = Window:AddTab("Farming"),
-    Item     = Window:AddTab("Get and Upgrade Items"),
-    Sea      = Window:AddTab("Sea Event"),
-    Fruit    = Window:AddTab("Fruit and Raid"),
-    Stats    = Window:AddTab("Stats"),
-    Teleport = Window:AddTab("Teleport"),
-    Info     = Window:AddTab("Information"),
-}
-
+----------------------------------------------------
 -- 1. TAB FARMING
-local FarmGroup = Tabs.Main:AddLeftGroupbox("Auto Farm Settings")
+----------------------------------------------------
+TabMain:AddSection({"Auto Farm Settings"})
 
-FarmGroup:AddDropdown("SelectWeapon", {
-    Values = { "Melee", "Sword", "Blox Fruit" },
-    Default = 1,
-    Multi = false,
-    Text = "Select Weapon",
+TabMain:AddDropdown({
+    Name = "Select Weapon",
+    Options = {"Melee", "Sword", "Blox Fruit"},
+    Default = "Melee",
     Callback = function(v)
         _G.SelectWeapon = v
     end
 })
 
-FarmGroup:AddToggle("ToggleAutoLevel", {
-    Text = "Auto Farm Level",
+TabMain:AddToggle({
+    Name = "Auto Farm Level",
     Default = false,
     Callback = function(v)
         _G.AutoLevel = v
     end
 })
 
-FarmGroup:AddToggle("ToggleFastAttack", {
-    Text = "Fast Attack",
+TabMain:AddToggle({
+    Name = "Fast Attack",
     Default = true,
     Callback = function(v)
         _G.FastAttack = v
     end
 })
 
-FarmGroup:AddToggle("ToggleBringMob", {
-    Text = "Bring Mobs",
+TabMain:AddToggle({
+    Name = "Bring Mobs",
     Default = true,
     Callback = function(v)
         _G.BringMob = v
     end
 })
 
--- 2. TAB GET AND UPGRADE ITEMS
-local ItemGroup = Tabs.Item:AddLeftGroupbox("Items & Upgrades")
+----------------------------------------------------
+-- 2. TAB ITEM
+----------------------------------------------------
+TabItem:AddSection({"Bone & Upgrades"})
 
 if game.PlaceId == 7449423635 then -- Sea 3
-    ItemGroup:AddToggle("ToggleRandomBone", {
-        Text = "Auto Random Bone",
+    TabItem:AddToggle({
+        Name = "Auto Random Bone",
         Default = false,
         Callback = function(v)
             _G.AutoRandomBone = v
@@ -135,73 +79,66 @@ if game.PlaceId == 7449423635 then -- Sea 3
     })
 end
 
+----------------------------------------------------
 -- 3. TAB SEA EVENT
-local SeaGroup = Tabs.Sea:AddLeftGroupbox("Kitsune Island")
+----------------------------------------------------
+TabSea:AddSection({"Kitsune Island"})
 
 if game.PlaceId == 7449423635 then -- Sea 3
-    SeaGroup:AddToggle("ToggleKitsuneTP", {
-        Text = "Tween To Kitsune Island",
+    TabSea:AddToggle({
+        Name = "Tween To Kitsune Island",
         Default = false,
         Callback = function(v)
             _G.TweenToKitsune = v
         end
     })
 
-    SeaGroup:AddToggle("ToggleAzure", {
-        Text = "Collect Azure Ember",
+    TabSea:AddToggle({
+        Name = "Collect Azure Ember",
         Default = false,
         Callback = function(v)
             _G.CollectAzure = v
         end
     })
 
-    SeaGroup:AddButton({
-        Text = "Kitsune Statue Pray",
-        Func = function()
+    TabSea:AddButton({
+        Name = "Kitsune Statue Pray",
+        Callback = function()
             pcall(function()
-                ReplicatedStorage.Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
+                game:GetService("ReplicatedStorage").Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
             end)
         end
     })
 end
 
+----------------------------------------------------
 -- 4. TAB INFORMATION
-local InfoGroup = Tabs.Info:AddLeftGroupbox("BDQ Hub Socials")
+----------------------------------------------------
+TabInfo:AddSection({"BDQ Hub Socials"})
 
-InfoGroup:AddButton({
-    Text = "Copy Discord Link",
-    Func = function()
+TabInfo:AddButton({
+    Name = "Copy Discord Link",
+    Callback = function()
         setclipboard("https://dsc.gg/nopermc")
-        Library:Notify("Đã copy link Discord vào bộ nhớ tạm!")
     end
 })
 
-InfoGroup:AddButton({
-    Text = "Copy Youtube Link",
-    Func = function()
+TabInfo:AddButton({
+    Name = "Copy Youtube Link",
+    Callback = function()
         setclipboard("https://youtube.com/@nopermc")
-        Library:Notify("Đã copy link Youtube vào bộ nhớ tạm!")
     end
 })
 
--- WATERMARK (FPS & PING)
-local FrameTimer = tick()
-local FrameCounter = 0
-local FPS = 60
-Library:SetWatermark("BDQ Hub Dark | FPS: 60 | Ping: 0ms")
+----------------------------------------------------
+-- CORE LOGIC (FARMING & FAST ATTACK)
+----------------------------------------------------
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
 
-RunService.RenderStepped:Connect(function()
-    FrameCounter = FrameCounter + 1
-    if (tick() - FrameTimer) >= 1 then
-        FPS = FrameCounter
-        FrameCounter = 0
-        FrameTimer = tick()
-        local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-        Library:SetWatermark(string.format("BDQ Hub Dark | FPS: %d | Ping: %dms", FPS, ping))
-    end
-end)
-
--- CORE FUNCTIONS
 local function AutoHaki()
     local char = Player.Character
     if char and not char:FindFirstChild("HasBuso") then
@@ -260,7 +197,7 @@ local function BringMobs(targetPos)
     end
 end
 
--- AUTO FARM LOOP
+-- Vòng lặp Farm Level
 task.spawn(function()
     while task.wait(0.1) do
         if _G.AutoLevel then
@@ -290,13 +227,18 @@ task.spawn(function()
     end
 end)
 
--- ANTI-AFK & NOCLIP
-Players.LocalPlayer.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+-- Vòng lặp Random Bone
+task.spawn(function()
+    while task.wait(0.5) do
+        if _G.AutoRandomBone then
+            pcall(function()
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+            end)
+        end
+    end
 end)
 
+-- NoClip Engine
 RunService.Stepped:Connect(function()
     if _G.AutoLevel or _G.TweenToKitsune or _G.CollectAzure then
         local char = Player.Character
@@ -309,6 +251,3 @@ RunService.Stepped:Connect(function()
         end
     end
 end)
-
--- THÔNG BÁO TẢI THÀNH CÔNG
-Library:Notify("BDQ Hub - Dark Theme đã tải thành công!")
