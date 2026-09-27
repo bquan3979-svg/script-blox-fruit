@@ -1,146 +1,413 @@
--- ==========================================
--- BDQ HUB - BLOX FRUIT (PC & MOBILE)
--- ==========================================
-
--- Tải Thư Viện UI Kavo
-local Kavo = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Kavo.CreateLib("BDQ Hub - Blox Fruit", "DarkTheme")
+loadstring(game:HttpGet("https://raw.githubusercontent.com/AnhDangNhoEm/TuanAnhIOS/refs/heads/main/koby"))()
 
 -- ==========================================
--- TẠO CÁC TABS PHỤ
+-- SERVICES & LOCAL VARIABLES
 -- ==========================================
-local TabInfo  = Window:NewTab("Thông Tin")
-local TabMain  = Window:NewTab("Cày Cấp")
-local TabSea   = Window:NewTab("Sự Kiện")
-local TabStats = Window:NewTab("Chỉ Số")
-local TabFruit = Window:NewTab("Trái Ác Quỷ")
-local TabTele  = Window:NewTab("Dịch Chuyển")
-local TabMisc  = Window:NewTab("Khác")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
+local Lighting = game:GetService("Lighting")
+local CollectionService = game:GetService("CollectionService")
+
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui", 5)
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+-- EXPLOIT CHECK
+local executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor())
+if executor then
+    if string.find(executor, "Bunni") or string.find(executor, "FluxusZ") or string.find(executor, "Delta") or
+       string.find(executor, "Arceus") or string.find(executor, "Xeno") or string.find(executor, "Swift") or
+       string.find(executor, "Awp") or string.find(executor, "Volcano") or string.find(executor, "Argon") or
+       string.find(executor, "Macsploit") or string.find(executor, "Potassium") or string.find(executor, "CodeX") or
+       string.find(executor, "Velocity") or string.find(executor, "Romix") or string.find(executor, "Neutron") then
+        print("Executor Accepted: " .. executor)
+    else
+        game.Players.LocalPlayer:Kick("Please use Delta Exploit or PC use Volcano or Exploit paid!")
+    end
+end
 
 -- ==========================================
--- TAB THÔNG TIN
+-- LOAD UI LIBRARY & THEME CONFIGURATION
 -- ==========================================
-local SectionInfo = TabInfo:NewSection("Thông Tin Script")
-SectionInfo:NewLabel("BDQ Hub - Hỗ Trợ PC & Mobile")
-SectionInfo:NewLabel("Chủ Sở Hữu: BDQ")
-SectionInfo:NewLabel("Phím Tắt Mở UI trên PC: Right Ctrl")
-SectionInfo:NewButton("Sao Chép Link Discord", "Copy link Discord hỗ trợ", function()
-    setclipboard("https://discord.gg/hdanhhub")
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "BDQ Hub",
-        Text = "Đã sao chép link Discord!",
-        Duration = 3
+Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/hdanhhub/UI/refs/heads/main/ui_BananaHub_final.lua"))()
+
+Window = Library:CreateWindow({
+    Title = "BDQ Hub",
+    Desc = "- Blox Fruit",
+    Image = "rbxassetid://123613996022560"
+})
+
+local function makeProxy(obj, callbackHolder)
+    local proxy = {}
+    setmetatable(proxy, {
+        __index = function(_, k)
+            if k == "OnChanged" then
+                return function(_, fn)
+                    callbackHolder.extra = fn
+                    return proxy
+                end
+            end
+            if k == "SetStage" and obj.SetStage then
+                return function(_, v) pcall(obj.SetStage, v) end
+            end
+            if k == "SetValue" then
+                return function(_, v)
+                    if obj.SetValue then
+                        local ok = pcall(obj.SetValue, v)
+                        if not ok then pcall(function() obj:SetValue(v) end) end
+                    end
+                end
+            end
+            if k == "GetValue" then
+                return function(_)
+                    if obj.GetValue then
+                        local ok, val = pcall(obj.GetValue)
+                        if ok then return val end
+                        local ok2, val2 = pcall(function() return obj:GetValue() end)
+                        return val2
+                    end
+                end
+            end
+            if k == "SetText" or k == "SetDesc" then
+                return function(_, t)
+                    if obj.SetText then pcall(obj.SetText, obj, t)
+                    elseif obj.SetDesc then pcall(obj.SetDesc, obj, t) end
+                end
+            end
+            local v = rawget(obj, k) or (type(obj) == "table" and obj[k])
+            if type(v) == "function" then
+                return function(_, ...) return pcall(v, obj, ...) end
+            end
+            return v
+        end
     })
-end)
+    return proxy
+end
 
--- ==========================================
--- TAB CÀY CẤP (MAIN)
--- ==========================================
-local SectionMain = TabMain:NewSection("Tự Động Cày Cấp")
+local function wrapTab(rawTab)
+    local _currentSection = nil
+    local _nextIsRight = false
 
-SectionMain:NewToggle("Auto Farm Level", "Bật/Tắt tự động farm level", function(state)
-    _G.AutoLevel = state
-end)
-
-SectionMain:NewDropdown("Chọn Vũ Khí", "Chọn loại vũ khí để farm", {"Melee", "Sword", "Blox Fruit"}, function(v)
-    _G.SelectWeapon = v
-end)
-
-local SectionFarmMon = TabMain:NewSection("Farm Quái Chọn Lựa")
-SectionFarmMon:NewDropdown("Chọn Quái", "Danh sách quái", {"Bandit", "Monkey", "Gorilla", "Pirate"}, function(v)
-    _G.SelectMonster = v
-end)
-
-SectionFarmMon:NewToggle("Auto Farm Quái Đã Chọn", "Bật/Tắt farm quái chọn", function(state)
-    _G.AutoFarmSelected = state
-end)
-
--- ==========================================
--- TAB SỰ KIỆN (SEA)
--- ==========================================
-local SectionSea = TabSea:NewSection("Sự Kiện Biển")
-SectionSea:NewToggle("Auto Sea Event", "Tự động làm sự kiện biển", function(state)
-    _G.AutoSea = state
-end)
-
--- ==========================================
--- TAB CHỈ SỐ (STATS)
--- ==========================================
-local SectionStats = TabStats:NewSection("Tự Động Cộng Điểm")
-SectionStats:NewToggle("Cộng Melee", "Tự cộng điểm Cận chiến", function(state) _G.StatsMelee = state end)
-SectionStats:NewToggle("Cộng Defense", "Tự cộng điểm Máu/Giáp", function(state) _G.StatsDefense = state end)
-SectionStats:NewToggle("Cộng Sword", "Tự cộng điểm Kiếm", function(state) _G.StatsSword = state end)
-SectionStats:NewToggle("Cộng Blox Fruit", "Tự cộng điểm Trái ác quỷ", function(state) _G.StatsFruit = state end)
-
--- ==========================================
--- TAB TRÁI ÁC QUỶ (FRUIT)
--- ==========================================
-local SectionFruit = TabFruit:NewSection("Tính Năng Trái Ác Quỷ")
-SectionFruit:NewButton("Random Trái Ác Quỷ", "Mua ngẫu nhiên trái ác quỷ", function()
-    pcall(function()
-        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Cousin", "Buy")
-    end)
-end)
-
-SectionFruit:NewToggle("Auto Cất Trái (Store Fruit)", "Tự cất trái vào rương", function(state)
-    _G.AutoStoreFruit = state
-end)
-
--- ==========================================
--- TAB KHÁC (MISC)
--- ==========================================
-local SectionMisc = TabMisc:NewSection("Cài Đặt Tiện Ích")
-SectionMisc:NewButton("Mở Console / Sửa Lỗi Chat", "Mở bảng lệnh F9", function()
-    game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
-end)
-
-SectionMisc:NewKeybind("Bật/Tắt Menu UI (Phím PC)", "Phím tắt ẩn/hiện bảng", Enum.KeyCode.RightControl, function()
-    Kavo:ToggleUI()
-end)
-
--- ==========================================
--- NÚT BẬT/TẮT MENU DÀNH CHO MOBILE & PC
--- ==========================================
-task.spawn(function()
-    local CoreGui = game:GetService("CoreGui")
-    if CoreGui:FindFirstChild("BDQToggleGui") then
-        CoreGui.BDQToggleGui:Destroy()
+    local function ensureSection()
+        if not _currentSection then _currentSection = rawTab:AddLeftGroupbox(" ") end
     end
 
-    local ScreenGui = Instance.new("ScreenGui")
-    local ToggleButton = Instance.new("TextButton")
-    local UICorner = Instance.new("UICorner")
+    local wrapped = {}
 
-    ScreenGui.Name = "BDQToggleGui"
-    ScreenGui.Parent = CoreGui
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    function wrapped:AddSection(name)
+        if _nextIsRight then
+            _currentSection = rawTab:AddRightGroupbox(name or " ")
+            _nextIsRight = false
+        else
+            _currentSection = rawTab:AddLeftGroupbox(name or " ")
+            _nextIsRight = true
+        end
+        return _currentSection
+    end
 
-    ToggleButton.Name = "ToggleButton"
-    ToggleButton.Parent = ScreenGui
-    ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    ToggleButton.Position = UDim2.new(0, 10, 0, 200)
-    ToggleButton.Size = UDim2.new(0, 80, 0, 35)
-    ToggleButton.Font = Enum.Font.SourceSansBold
-    ToggleButton.Text = "BDQ HUB"
-    ToggleButton.TextColor3 = Color3.fromRGB(0, 170, 255)
-    ToggleButton.TextSize = 14.000
-    ToggleButton.Active = true
-    ToggleButton.Draggable = true
+    function wrapped:AddToggle(id, setting)
+        ensureSection()
+        local holder = { extra = nil }
+        local origCb = setting.Callback or setting["Callback"]
+        setting.Callback = function(v)
+            if origCb then pcall(origCb, v) end
+            if holder.extra then pcall(holder.extra, v) end
+        end
+        setting["Description"] = nil
+        local obj = _currentSection:AddToggle(id, setting)
+        return makeProxy(obj, holder)
+    end
 
-    UICorner.CornerRadius = UDim.new(0, 8)
-    UICorner.Parent = ToggleButton
+    function wrapped:AddButton(setting, cb)
+        ensureSection()
+        if type(setting) == "table" then setting["Description"] = nil end
+        local proxy = _currentSection:AddButton(setting, cb)
+        if proxy then return makeProxy(proxy, {}) end
+    end
 
-    ToggleButton.MouseButton1Click:Connect(function()
-        Kavo:ToggleUI()
-    end)
+    function wrapped:AddDropdown(id, setting)
+        ensureSection()
+        local holder = { extra = nil }
+        local origCb = setting.Callback or setting["Callback"]
+        setting.Callback = function(v)
+            if origCb then pcall(origCb, v) end
+            if holder.extra then pcall(holder.extra, v) end
+        end
+        setting["Description"] = nil
+        local obj = _currentSection:AddDropdown(id, setting)
+        return makeProxy(obj, holder)
+    end
+
+    function wrapped:AddSlider(id, setting)
+        ensureSection()
+        local holder = { extra = nil }
+        local origCb = setting.Callback or setting["Callback"]
+        setting.Callback = function(v)
+            if origCb then pcall(origCb, v) end
+            if holder.extra then pcall(holder.extra, v) end
+        end
+        setting["Description"] = nil
+        local obj = _currentSection:AddSlider(setting)
+        return makeProxy(obj, holder)
+    end
+
+    function wrapped:AddParagraph(setting)
+        ensureSection()
+        local title = setting.Title or setting["Title"] or ""
+        local desc  = setting.Description or setting["Description"] or setting.Desc or ""
+        local txt   = desc ~= "" and (title .. "\n" .. desc) or title
+        local obj = _currentSection:AddLabel(txt)
+        return makeProxy(obj, {})
+    end
+
+    return wrapped
+end
+
+Tabs = {
+    ["Info"]     = wrapTab(Window:AddTab("Thông Tin")),
+    ["Main"]     = wrapTab(Window:AddTab("Cày Cấp")),
+    ["Sea"]      = wrapTab(Window:AddTab("Sự Kiện")),
+    ["Item"]     = wrapTab(Window:AddTab("Lấy & Nâng Cấp Vật Phẩm")),
+    ["Setting"]  = wrapTab(Window:AddTab("Cài Đặt")),
+    ["Status"]   = wrapTab(Window:AddTab("Webhook")),
+    ["Stats"]    = wrapTab(Window:AddTab("Chỉ Số")),
+    ["Player"]   = wrapTab(Window:AddTab("Người Chơi")),
+    ["Teleport"] = wrapTab(Window:AddTab("Dịch Chuyển")),
+    ["Visual"]   = wrapTab(Window:AddTab("Giả Mạo")),
+    ["Fruit"]    = wrapTab(Window:AddTab("Trái Ác Quỷ")),
+    ["Raid"]     = wrapTab(Window:AddTab("Đột Kích")),
+    ["Race"]     = wrapTab(Window:AddTab("Nâng Cấp Chủng Tộc")),
+    ["Shop"]     = wrapTab(Window:AddTab("Cửa Hàng")),
+    ["Misc"]     = wrapTab(Window:AddTab("Khác")),
+}
+
+pcall(function()
+    if Library.SetTheme then
+        Library:SetTheme({
+            Background         = Color3.fromRGB(255, 182, 193),
+            Accent             = Color3.fromRGB(255, 20, 147),
+            PrimaryText        = Color3.fromRGB(255, 255, 255),
+            SecondaryText      = Color3.fromRGB(255, 220, 230),
+            Divider            = Color3.fromRGB(255, 105, 180),
+            Header             = Color3.fromRGB(220, 20, 90),
+            Box                = Color3.fromRGB(255, 145, 175),
+            Button             = Color3.fromRGB(255, 20, 147),
+            Hover              = Color3.fromRGB(255, 80, 160),
+            Toggle             = Color3.fromRGB(255, 20, 147),
+            ToggleBackground   = Color3.fromRGB(255, 182, 193),
+            Dropdown           = Color3.fromRGB(255, 145, 175),
+            DropdownBackground = Color3.fromRGB(255, 182, 193),
+            Scrollbar          = Color3.fromRGB(255, 20, 147),
+            Outline            = Color3.fromRGB(255, 105, 180),
+            Shadow             = Color3.fromRGB(180, 0, 80),
+        })
+    end
 end)
 
+Library:Notify({
+    Title = "BDQ Hub",
+    Description = "Chào mừng! UI màu hồng đã được load thành công.",
+    Duration = 4
+})
+
 -- Anti AFK
+Players.LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+end)
+
+-- ==========================================
+-- CORE HELPER FUNCTIONS & FARM LOGIC
+-- ==========================================
+Sea1 = game.PlaceId == 2753915549 or true
+Sea2 = game.PlaceId == 4442272183 or true
+Sea3 = game.PlaceId == 7449423635 or true
+
+Pos = CFrame.new(0, 30, 0)
+ChooseWeapon = "Melee"
+SelectWeapon = "Melee"
+
+function AutoHaki()
+    if not Player.Character:FindFirstChild("HasBuso") then
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+    end
+end
+
+function EquipTool(toolName)
+    if Player.Backpack:FindFirstChild(toolName) then
+        local tool = Player.Backpack:FindFirstChild(toolName)
+        Player.Character.Humanoid:EquipTool(tool)
+    end
+end
+
+function Tween2(targetCFrame)
+    local distance = (targetCFrame.Position - Player.Character.HumanoidRootPart.Position).Magnitude
+    local speed = 350
+    local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(Player.Character.HumanoidRootPart, tweenInfo, { CFrame = targetCFrame })
+    tween:Play()
+end
+
+function BKP(targetCFrame)
+    if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+        Player.Character.HumanoidRootPart.CFrame = targetCFrame
+    end
+end
+
+function AttackNoCoolDown()
+    local char = Player.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if tool then
+        if tool:FindFirstChild("LeftClickRemote") then
+            tool.LeftClickRemote:FireServer(Vector3.new(0, -1, 0), 1)
+        else
+            pcall(function()
+                local net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+                net:WaitForChild("RE/RegisterAttack"):FireServer(1e-9)
+                local enemy = Workspace.Enemies:FindFirstChildOfClass("Model")
+                if enemy and enemy:FindFirstChild("Head") then
+                    net:WaitForChild("RE/RegisterHit"):FireServer(enemy.Head, {{ enemy, enemy.Head }})
+                end
+            end)
+        end
+    end
+end
+
+-- ==========================================
+-- TAB: THÔNG TIN (INFO)
+-- ==========================================
+Tabs.Info:AddSection("Thông Tin Community")
+Tabs.Info:AddButton({
+    ["Title"] = "BDQ Community",
+    ["Callback"] = function() setclipboard("https://dsc.gg/nopermc") end
+})
+Tabs.Info:AddButton({
+    ["Title"] = "BDQ Hub (Youtube)",
+    ["Callback"] = function() setclipboard("https://youtube.com/@nopermc") end
+})
+
+-- ==========================================
+-- TAB: CÀY CẤP (MAIN)
+-- ==========================================
+Tabs.Main:AddSection("Cày Cấp")
+local weaponDropdown = Tabs.Main:AddDropdown("DropdownSelectWeapon", {
+    ["Title"] = "Vũ Khí",
+    ["Values"] = { "Melee", "Sword", "Blox Fruit" },
+    ["Default"] = 1
+})
+weaponDropdown:OnChanged(function(v) ChooseWeapon = v end)
+
+Tabs.Main:AddToggle("ToggleLevel", {
+    ["Title"] = "Tự Động Cày Cấp (Auto Level)",
+    ["Default"] = false
+}):OnChanged(function(v) _G.AutoLevel = v end)
+
 task.spawn(function()
-    local VirtualUser = game:GetService("VirtualUser")
-    game:GetService("Players").LocalPlayer.Idled:Connect(function()
-        VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-        task.wait(1)
-        VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    while task.wait(0.1) do
+        if _G.AutoLevel then
+            pcall(function()
+                -- Tự động kiểm tra cấp và làm Quest
+                for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                    if enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                        repeat
+                            task.wait(0.05)
+                            EquipTool(SelectWeapon)
+                            AutoHaki()
+                            BKP(enemy.HumanoidRootPart.CFrame * Pos)
+                            AttackNoCoolDown()
+                        until not _G.AutoLevel or not enemy.Parent or enemy.Humanoid.Health <= 0
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+Tabs.Main:AddSection("Chiến Đấu Nhanh")
+Tabs.Main:AddToggle("ToggleOneHit", {
+    ["Title"] = "Đánh Nhanh (Fast Attack / Fast Kill)",
+    ["Default"] = false
+}):OnChanged(function(v) _G.OneHitKill = v end)
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if _G.OneHitKill then
+            pcall(function()
+                for _, mob in pairs(Workspace.Enemies:GetChildren()) do
+                    local hum = mob:FindFirstChild("Humanoid")
+                    if hum and hum.Health > hum.MaxHealth * 0.25 then
+                        hum.Health = hum.MaxHealth * 0.25
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+if Sea3 then
+    Tabs.Main:AddSection("Cày Xương (Bone Farm)")
+    Tabs.Main:AddToggle("ToggleBone", {
+        ["Title"] = "Tự Động Cày Xương",
+        ["Default"] = false
+    }):OnChanged(function(v) _G.AutoBone = v end)
+
+    Tabs.Main:AddToggle("ToggleRandomBone", {
+        ["Title"] = "Tự Động Random Xương",
+        ["Default"] = false
+    }):OnChanged(function(v) _G.AutoRandomBone = v end)
+
+    task.spawn(function()
+        while task.wait(0.2) do
+            if _G.AutoRandomBone then
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
+            end
+        end
     end)
+end
+
+-- ==========================================
+-- TAB: SỰ KIỆN (SEA)
+-- ==========================================
+if Sea3 then
+    Tabs.Sea:AddSection("Đảo Cáo (Kitsune Island)")
+    Tabs.Sea:AddToggle("ToggleTPKitsune", {
+        ["Title"] = "Bay Vào Đảo Cáo",
+        ["Default"] = false
+    }):OnChanged(function(v) _G.TweenToKitsune = v end)
+
+    Tabs.Sea:AddToggle("ToggleCollectAzure", {
+        ["Title"] = "Nhặt Linh Hồn Azure",
+        ["Default"] = false
+    }):OnChanged(function(v) _G.CollectAzure = v end)
+
+    Tabs.Sea:AddButton({
+        ["Title"] = "Đổi Linh Hồn Lấy Quà",
+        ["Callback"] = function()
+            ReplicatedStorage.Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
+        end
+    })
+end
+
+-- NoClip Clip Safety Loop
+RunService.Stepped:Connect(function()
+    if _G.AutoLevel or _G.AutoBone or _G.AutoYama or _G.TweenToKitsune or _G.AutoBoss then
+        if Player.Character then
+            for _, part in pairs(Player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
 end)
