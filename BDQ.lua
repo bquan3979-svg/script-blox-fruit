@@ -16,275 +16,126 @@ local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
--- Safe globals
+-- Safe Globals
 _G.AutoLevel = false
-_G.OneHitKill = false
+_G.FastAttack = false
+_G.BringMob = false
 _G.AutoBone = false
 _G.AutoRandomBone = false
 _G.TweenToKitsune = false
 _G.CollectAzure = false
 _G.AutoYama = false
 _G.AutoBoss = false
+_G.SelectWeapon = "Melee"
 
--- Executor check
+-- Executor Check
 local executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor())
 if executor then
     local lower = string.lower(executor)
-    local accepted =
-        string.find(lower, "bunni") or
-        string.find(lower, "fluxusz") or
-        string.find(lower, "delta") or
-        string.find(lower, "arceus") or
-        string.find(lower, "xeno") or
-        string.find(lower, "swift") or
-        string.find(lower, "awp") or
-        string.find(lower, "volcano") or
-        string.find(lower, "argon") or
-        string.find(lower, "macsploit") or
-        string.find(lower, "potassium") or
-        string.find(lower, "codex") or
-        string.find(lower, "velocity") or
-        string.find(lower, "romix") or
-        string.find(lower, "neutron")
-
-    if accepted then
-        print("Executor Accepted: " .. executor)
-    else
-        Player:Kick("Please use Delta Exploit or PC use Volcano or Exploit paid!")
+    local accepted = string.find(lower, "bunni") or string.find(lower, "fluxus") or string.find(lower, "delta") or
+                     string.find(lower, "arceus") or string.find(lower, "xeno") or string.find(lower, "swift") or
+                     string.find(lower, "awp") or string.find(lower, "volcano") or string.find(lower, "argon") or
+                     string.find(lower, "macsploit") or string.find(lower, "potassium") or string.find(lower, "codex") or
+                     string.find(lower, "velocity") or string.find(lower, "romix") or string.find(lower, "neutron")
+    if not accepted then
+        Player:Kick("[BDQ Hub]: Executor không được hỗ trợ!")
     end
 end
 
--- Load UI library
+-- Load LinoriaLib (Banana Style)
 local success, Library = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/Library.lua"))()
 end)
 if not success or not Library then
-    warn("Failed to load library")
+    warn("Lỗi tải LinoriaLib")
     return
 end
 
 local Window = Library:CreateWindow({
-    Title = "BDQ Hub",
-    Desc = "- Blox Fruit",
-    Image = "rbxassetid://123613996022560"
+    Title = "BDQ Hub | Banana Style Version",
+    Center = true,
+    AutoShow = true,
+    TabPadding = 8,
+    MenuFadeTime = 0.2
 })
 
-local function makeProxy(obj, callbackHolder)
-    local proxy = {}
-    setmetatable(proxy, {
-        __index = function(_, k)
-            if k == "OnChanged" then
-                return function(_, fn)
-                    callbackHolder.extra = fn
-                    return proxy
-                end
-            end
-
-            if k == "SetStage" and obj and obj.SetStage then
-                return function(_, v)
-                    pcall(obj.SetStage, obj, v)
-                end
-            end
-
-            if k == "SetValue" then
-                return function(_, v)
-                    if obj and obj.SetValue then
-                        local ok = pcall(obj.SetValue, obj, v)
-                        if not ok and obj.SetValue ~= nil then
-                            pcall(function()
-                                obj:SetValue(v)
-                            end)
-                        end
-                    end
-                end
-            end
-
-            if k == "GetValue" then
-                return function(_)
-                    if obj and obj.GetValue then
-                        local ok, val = pcall(function()
-                            return obj:GetValue()
-                        end)
-                        if ok then
-                            return val
-                        end
-                    end
-                    return nil
-                end
-            end
-
-            if k == "SetText" or k == "SetDesc" then
-                return function(_, t)
-                    if obj and obj.SetText then
-                        pcall(obj.SetText, obj, t)
-                    elseif obj and obj.SetDesc then
-                        pcall(obj.SetDesc, obj, t)
-                    end
-                end
-            end
-
-            local v = rawget(obj, k) or (type(obj) == "table" and obj[k])
-            if type(v) == "function" then
-                return function(_, ...)
-                    local ok, result = pcall(v, obj, ...)
-                    if ok then
-                        return result
-                    end
-                    return nil
-                end
-            end
-            return v
-        end
-    })
-    return proxy
-end
-
+-- Custom UI Wrapper (Adapting Linoria to Tab standard)
 local function wrapTab(rawTab)
-    local _currentSection = nil
-    local _nextIsRight = false
-
-    local function ensureSection()
-        if not _currentSection then
-            _currentSection = rawTab:AddLeftGroupbox(" ")
-        end
-    end
+    local currentLeft = rawTab:AddLeftGroupbox("Cài Đặt Chức Năng")
+    local currentRight = rawTab:AddRightGroupbox("Tùy Chọn Khác")
+    local sideToggle = false
 
     local wrapped = {}
-
     function wrapped:AddSection(name)
-        if _nextIsRight then
-            _currentSection = rawTab:AddRightGroupbox(name or " ")
-            _nextIsRight = false
+        sideToggle = not sideToggle
+        if sideToggle then
+            currentLeft = rawTab:AddLeftGroupbox(name or " ")
+            return currentLeft
         else
-            _currentSection = rawTab:AddLeftGroupbox(name or " ")
-            _nextIsRight = true
+            currentRight = rawTab:AddRightGroupbox(name or " ")
+            return currentRight
         end
-        return _currentSection
     end
 
-    function wrapped:AddToggle(id, setting)
-        ensureSection()
-        local holder = { extra = nil }
-        local origCb = setting.Callback or setting["Callback"]
-        setting.Callback = function(v)
-            if origCb then
-                pcall(origCb, v)
-            end
-            if holder.extra then
-                pcall(holder.extra, v)
-            end
-        end
-        setting["Description"] = nil
-        local obj = _currentSection:AddToggle(id, setting)
-        return makeProxy(obj, holder)
+    function wrapped:AddToggle(id, config)
+        local target = sideToggle and currentLeft or currentRight
+        return target:AddToggle(id, {
+            Text = config.Title or id,
+            Default = config.Default or false,
+            Callback = config.Callback or function() end
+        })
     end
 
-    function wrapped:AddButton(setting, cb)
-        ensureSection()
-        if type(setting) == "table" then
-            setting["Description"] = nil
-        end
-        local proxy = _currentSection:AddButton(setting, cb)
-        if proxy then
-            return makeProxy(proxy, {})
-        end
-        return nil
+    function wrapped:AddDropdown(id, config)
+        local target = sideToggle and currentLeft or currentRight
+        return target:AddDropdown(id, {
+            Values = config.Values or {},
+            Default = config.Default or 1,
+            Multi = false,
+            Text = config.Title or id,
+            Callback = config.Callback or function() end
+        })
     end
 
-    function wrapped:AddDropdown(id, setting)
-        ensureSection()
-        local holder = { extra = nil }
-        local origCb = setting.Callback or setting["Callback"]
-        setting.Callback = function(v)
-            if origCb then
-                pcall(origCb, v)
-            end
-            if holder.extra then
-                pcall(holder.extra, v)
-            end
-        end
-        setting["Description"] = nil
-        local obj = _currentSection:AddDropdown(id, setting)
-        return makeProxy(obj, holder)
-    end
-
-    function wrapped:AddSlider(id, setting)
-        ensureSection()
-        local holder = { extra = nil }
-        local origCb = setting.Callback or setting["Callback"]
-        setting.Callback = function(v)
-            if origCb then
-                pcall(origCb, v)
-            end
-            if holder.extra then
-                pcall(holder.extra, v)
-            end
-        end
-        setting["Description"] = nil
-
-        -- Fixed: pass the id and config to the underlying library
-        local obj = _currentSection:AddSlider(id, setting)
-        return makeProxy(obj, holder)
-    end
-
-    function wrapped:AddParagraph(setting)
-        ensureSection()
-        local title = setting.Title or setting["Title"] or ""
-        local desc = setting.Description or setting["Description"] or setting.Desc or ""
-        local text = desc ~= "" and (title .. "\n" .. desc) or title
-        local obj = _currentSection:AddLabel(text)
-        return makeProxy(obj, {})
+    function wrapped:AddButton(config)
+        local target = sideToggle and currentLeft or currentRight
+        return target:AddButton({
+            Text = config.Title or "Button",
+            Func = config.Callback or function() end
+        })
     end
 
     return wrapped
 end
 
+-- Tabs Config
 local Tabs = {
     Info = wrapTab(Window:AddTab("Thông Tin")),
-    Main = wrapTab(Window:AddTab("Cày Cấp")),
+    Main = wrapTab(Window:AddTab("Farm Level")),
     Sea = wrapTab(Window:AddTab("Sự Kiện")),
-    Item = wrapTab(Window:AddTab("Lấy & Nâng Cấp Vật Phẩm")),
-    Setting = wrapTab(Window:AddTab("Cài Đặt")),
-    Status = wrapTab(Window:AddTab("Webhook")),
+    Item = wrapTab(Window:AddTab("Vật Phẩm")),
     Stats = wrapTab(Window:AddTab("Chỉ Số")),
-    Player = wrapTab(Window:AddTab("Người Chơi")),
     Teleport = wrapTab(Window:AddTab("Dịch Chuyển")),
-    Visual = wrapTab(Window:AddTab("Giả Mạo")),
     Fruit = wrapTab(Window:AddTab("Trái Ác Quỷ")),
-    Raid = wrapTab(Window:AddTab("Đột Kích")),
-    Race = wrapTab(Window:AddTab("Nâng Cấp Chủng Tộc")),
-    Shop = wrapTab(Window:AddTab("Cửa Hàng")),
     Misc = wrapTab(Window:AddTab("Khác")),
 }
 
-pcall(function()
-    if Library.SetTheme then
-        Library:SetTheme({
-            Background         = Color3.fromRGB(255, 182, 193),
-            Accent             = Color3.fromRGB(255, 20, 147),
-            PrimaryText        = Color3.fromRGB(255, 255, 255),
-            SecondaryText      = Color3.fromRGB(255, 220, 230),
-            Divider            = Color3.fromRGB(255, 105, 180),
-            Header             = Color3.fromRGB(220, 20, 90),
-            Box                = Color3.fromRGB(255, 145, 175),
-            Button             = Color3.fromRGB(255, 20, 147),
-            Hover              = Color3.fromRGB(255, 80, 160),
-            Toggle             = Color3.fromRGB(255, 20, 147),
-            ToggleBackground   = Color3.fromRGB(255, 182, 193),
-            Dropdown           = Color3.fromRGB(255, 145, 175),
-            DropdownBackground = Color3.fromRGB(255, 182, 193),
-            Scrollbar          = Color3.fromRGB(255, 20, 147),
-            Outline            = Color3.fromRGB(255, 105, 180),
-            Shadow             = Color3.fromRGB(180, 0, 80),
-        })
+-- Watermark (Banana Hub Style)
+local FrameTimer = tick()
+local FrameCounter = 0
+local FPS = 60
+local Watermark = Library:SetWatermark("BDQ Hub | Banana Style | FPS: 60 | Ping: 0ms")
+
+RunService.RenderStepped:Connect(function()
+    FrameCounter = FrameCounter + 1
+    if (tick() - FrameTimer) >= 1 then
+        FPS = FrameCounter
+        FrameCounter = 0
+        FrameTimer = tick()
+        local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+        Library:SetWatermark(string.format("BDQ Hub | Banana Style | FPS: %d | Ping: %dms", FPS, ping))
     end
 end)
-
-Library:Notify({
-    Title = "BDQ Hub",
-    Description = "Chào mừng! UI màu hồng đã được load thành công.",
-    Duration = 4
-})
 
 -- Anti-AFK
 Players.LocalPlayer.Idled:Connect(function()
@@ -293,145 +144,142 @@ Players.LocalPlayer.Idled:Connect(function()
     VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
 end)
 
--- Location checks
-local Sea1 = game.PlaceId == 2753915549
-local Sea2 = game.PlaceId == 4442272183
-local Sea3 = game.PlaceId == 7449423635
-
-local Pos = CFrame.new(0, 30, 0)
-local ChooseWeapon = "Melee"
-local SelectWeapon = "Melee"
-
+-- Core Functions (Banana Standard)
 local function AutoHaki()
     local char = Player.Character
-    if not char then
-        return
-    end
-
-    if not char:FindFirstChild("HasBuso") then
-        local ok = pcall(function()
+    if char and not char:FindFirstChild("HasBuso") then
+        pcall(function()
             ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
         end)
-        if not ok then
-            pcall(function()
-                ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
-            end)
-        end
     end
 end
 
-local function EquipTool(toolName)
+local function EquipWeapon(weaponType)
     local char = Player.Character
-    if not char then
-        return
-    end
-
     local backpack = Player.Backpack
-    local tool = backpack and backpack:FindFirstChild(toolName)
-    if tool then
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum:EquipTool(tool)
+    if not char or not backpack then return end
+
+    for _, item in pairs(backpack:GetChildren()) do
+        if item:IsA("Tool") then
+            if (weaponType == "Melee" and item.ToolTip == "Melee") or
+               (weaponType == "Sword" and item.ToolTip == "Sword") or
+               (weaponType == "Blox Fruit" and item.ToolTip == "Blox Fruit") then
+                char.Humanoid:EquipTool(item)
+                break
+            end
         end
     end
 end
 
-local function Tween2(targetCFrame)
+local function FastAttack()
+    if not _G.FastAttack then return end
+    pcall(function()
+        local net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+        net:WaitForChild("RE/RegisterAttack"):FireServer(1e-9)
+        
+        local enemies = Workspace.Enemies:GetChildren()
+        for _, enemy in pairs(enemies) do
+            local hum = enemy:FindFirstChild("Humanoid")
+            local hrp = enemy:FindFirstChild("HumanoidRootPart")
+            if hum and hrp and hum.Health > 0 then
+                if (hrp.Position - Player.Character.HumanoidRootPart.Position).Magnitude <= 55 then
+                    net:WaitForChild("RE/RegisterHit"):FireServer(hrp, {{enemy, hrp}})
+                end
+            end
+        end
+    end)
+end
+
+-- Bring Mob (Banana Feature)
+local function BringMobs(targetPos)
+    if not _G.BringMob then return end
+    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+        local hum = enemy:FindFirstChild("Humanoid")
+        local hrp = enemy:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.Health > 0 and (hrp.Position - targetPos).Magnitude <= 300 then
+            hrp.CFrame = CFrame.new(targetPos)
+            hrp.CanCollide = false
+            hum.WalkSpeed = 0
+        end
+    end
+end
+
+-- Tween Flight
+local function TweenTo(targetCFrame)
     local char = Player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if not char or not hrp then
-        return
-    end
+    if not hrp then return end
 
     local distance = (targetCFrame.Position - hrp.Position).Magnitude
-    local speed = 350
+    local speed = 300
     local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(hrp, tweenInfo, { CFrame = targetCFrame })
+    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
     tween:Play()
 end
 
-local function BKP(targetCFrame)
-    local char = Player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        hrp.CFrame = targetCFrame
-    end
-end
+-- TAB: MAIN (FARM LEVEL)
+local FarmSection = Tabs.Main:AddSection("Tùy Chọn Cày Cấp")
 
-local function AttackNoCoolDown()
-    local char = Player.Character
-    if not char then
-        return
-    end
-
-    local tool = char:FindFirstChildOfClass("Tool")
-    if tool then
-        if tool:FindFirstChild("LeftClickRemote") then
-            tool.LeftClickRemote:FireServer(Vector3.new(0, -1, 0), 1)
-            return
-        end
-
-        local ok = pcall(function()
-            local net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
-            net:WaitForChild("RE/RegisterAttack"):FireServer(1e-9)
-
-            local enemy = Workspace.Enemies and Workspace.Enemies:FindFirstChildOfClass("Model")
-            if enemy and enemy:FindFirstChild("Head") then
-                net:WaitForChild("RE/RegisterHit"):FireServer(enemy.Head, { { enemy, enemy.Head } })
-            end
-        end)
-        if not ok then
-            warn("AttackNoCoolDown failed")
-        end
-    end
-end
-
--- Main tab
-Tabs.Main:AddSection("Cày Cấp")
-
-local weaponDropdown = Tabs.Main:AddDropdown("DropdownSelectWeapon", {
-    Title = "Vũ Khí",
+Tabs.Main:AddDropdown("SelectWeapon", {
+    Title = "Chọn Vũ Khí Farm",
     Values = { "Melee", "Sword", "Blox Fruit" },
     Default = 1,
+    Callback = function(v)
+        _G.SelectWeapon = v
+    end
 })
-weaponDropdown:OnChanged(function(v)
-    ChooseWeapon = v
-    SelectWeapon = v
-end)
 
-Tabs.Main:AddToggle("ToggleLevel", {
+Tabs.Main:AddToggle("ToggleAutoLevel", {
     Title = "Tự Động Cày Cấp (Auto Level)",
     Default = false,
-}):OnChanged(function(v)
-    _G.AutoLevel = v
-end)
+    Callback = function(v)
+        _G.AutoLevel = v
+    end
+})
 
+Tabs.Main:AddToggle("ToggleFastAttack", {
+    Title = "Đánh Nhanh (Fast Attack)",
+    Default = true,
+    Callback = function(v)
+        _G.FastAttack = v
+    end
+})
+
+Tabs.Main:AddToggle("ToggleBringMob", {
+    Title = "Gom Quái Lại Gần (Bring Mobs)",
+    Default = true,
+    Callback = function(v)
+        _G.BringMob = v
+    end
+})
+
+-- Auto Level Loop
 task.spawn(function()
     while task.wait(0.1) do
         if _G.AutoLevel then
-            local char = Player.Character
-            if not char then
-                continue
-            end
-
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if not hum then
-                continue
-            end
-
             pcall(function()
-                for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
-                    if enemy and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                AutoHaki()
+                EquipWeapon(_G.SelectWeapon)
+
+                local enemies = Workspace.Enemies:GetChildren()
+                local hasTarget = false
+
+                for _, enemy in pairs(enemies) do
+                    local hum = enemy:FindFirstChild("Humanoid")
+                    local hrp = enemy:FindFirstChild("HumanoidRootPart")
+                    if hum and hrp and hum.Health > 0 then
+                        hasTarget = true
                         repeat
-                            task.wait(0.05)
-                            EquipTool(SelectWeapon)
+                            task.wait()
                             AutoHaki()
-                            local enemyHRP = enemy:FindFirstChild("HumanoidRootPart")
-                            if enemyHRP then
-                                BKP(enemyHRP.CFrame * Pos)
-                            end
-                            AttackNoCoolDown()
-                        until not _G.AutoLevel or not enemy.Parent or not enemy:FindFirstChild("Humanoid") or enemy.Humanoid.Health <= 0
+                            EquipWeapon(_G.SelectWeapon)
+                            
+                            -- Giữ khoảng cách farm an toàn phía trên quái (Banana Style)
+                            Player.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 20, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                            
+                            BringMobs(hrp.Position)
+                            FastAttack()
+                        until not _G.AutoLevel or not enemy.Parent or hum.Health <= 0
                     end
                 end
             end)
@@ -439,49 +287,46 @@ task.spawn(function()
     end
 end)
 
-Tabs.Main:AddSection("Chiến Đấu Nhanh")
-Tabs.Main:AddToggle("ToggleOneHit", {
-    Title = "Đánh Nhanh (Fast Attack / Fast Kill)",
-    Default = false,
-}):OnChanged(function(v)
-    _G.OneHitKill = v
-end)
+-- TAB: SEA EVENTS (KITSUNE / BONE)
+if game.PlaceId == 7449423635 then -- Sea 3
+    Tabs.Sea:AddSection("Sự Kiện Đảo Cáo (Kitsune Island)")
 
-task.spawn(function()
-    while task.wait(0.1) do
-        if _G.OneHitKill then
-            pcall(function()
-                if Workspace.Enemies then
-                    for _, mob in pairs(Workspace.Enemies:GetChildren()) do
-                        local hum = mob and mob:FindFirstChild("Humanoid")
-                        if hum and hum.Health > 0 then
-                            hum.Health = hum.MaxHealth * 0.25
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
-if Sea3 then
-    Tabs.Main:AddSection("Cày Xương (Bone Farm)")
-    Tabs.Main:AddToggle("ToggleBone", {
-        Title = "Tự Động Cày Xương",
+    Tabs.Sea:AddToggle("ToggleKitsuneTP", {
+        Title = "Bay Đến Đảo Cáo",
         Default = false,
-    }):OnChanged(function(v)
-        _G.AutoBone = v
-    end)
+        Callback = function(v)
+            _G.TweenToKitsune = v
+        end
+    })
 
+    Tabs.Sea:AddToggle("ToggleAzure", {
+        Title = "Tự Nhặt Linh Hồn Azure",
+        Default = false,
+        Callback = function(v)
+            _G.CollectAzure = v
+        end
+    })
+
+    Tabs.Sea:AddButton({
+        Title = "Đổi Linh Hồn Lấy Quà (Kitsune Pray)",
+        Callback = function()
+            pcall(function()
+                ReplicatedStorage.Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
+            end)
+        end
+    })
+
+    Tabs.Main:AddSection("Cày Xương (Bone Farm)")
     Tabs.Main:AddToggle("ToggleRandomBone", {
         Title = "Tự Động Random Xương",
         Default = false,
-    }):OnChanged(function(v)
-        _G.AutoRandomBone = v
-    end)
+        Callback = function(v)
+            _G.AutoRandomBone = v
+        end
+    })
 
     task.spawn(function()
-        while task.wait(0.2) do
+        while task.wait(0.5) do
             if _G.AutoRandomBone then
                 pcall(function()
                     ReplicatedStorage.Remotes.CommF_:InvokeServer("Bones", "Buy", 1, 1)
@@ -491,35 +336,27 @@ if Sea3 then
     end)
 end
 
-if Sea3 then
-    Tabs.Sea:AddSection("Đảo Cáo (Kitsune Island)")
-    Tabs.Sea:AddToggle("ToggleTPKitsune", {
-        Title = "Bay Vào Đảo Cáo",
-        Default = false,
-    }):OnChanged(function(v)
-        _G.TweenToKitsune = v
-    end)
+-- TAB: INFO
+Tabs.Info:AddSection("Cộng Đồng & Hỗ Trợ")
+Tabs.Info:AddButton({
+    Title = "Copy Link Discord BDQ",
+    Callback = function()
+        setclipboard("https://dsc.gg/nopermc")
+        Library:Notify({ Title = "Success", Description = "Đã copy link Discord!", Duration = 3 })
+    end
+})
 
-    Tabs.Sea:AddToggle("ToggleCollectAzure", {
-        Title = "Nhặt Linh Hồn Azure",
-        Default = false,
-    }):OnChanged(function(v)
-        _G.CollectAzure = v
-    end)
+Tabs.Info:AddButton({
+    Title = "Kênh Youtube BDQ Hub",
+    Callback = function()
+        setclipboard("https://youtube.com/@nopermc")
+        Library:Notify({ Title = "Success", Description = "Đã copy link Youtube!", Duration = 3 })
+    end
+})
 
-    Tabs.Sea:AddButton({
-        Title = "Đổi Linh Hồn Lấy Quà",
-        Callback = function()
-            pcall(function()
-                ReplicatedStorage.Modules.Net["RF/KitsuneStatuePray"]:InvokeServer()
-            end)
-        end
-    })
-end
-
--- NoClip safety loop
+-- NoClip Engine (Xử lý bay qua địa hình)
 RunService.Stepped:Connect(function()
-    if _G.AutoLevel or _G.AutoBone or _G.AutoYama or _G.TweenToKitsune or _G.AutoBoss then
+    if _G.AutoLevel or _G.TweenToKitsune or _G.CollectAzure then
         local char = Player.Character
         if char then
             for _, part in pairs(char:GetDescendants()) do
@@ -531,18 +368,9 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Info tab
-Tabs.Info:AddSection("Thông Tin Community")
-Tabs.Info:AddButton({
-    Title = "BDQ Community",
-    Callback = function()
-        setclipboard("https://dsc.gg/nopermc")
-    end
-})
-
-Tabs.Info:AddButton({
-    Title = "BDQ Hub (Youtube)",
-    Callback = function()
-        setclipboard("https://youtube.com/@nopermc")
-    end
+-- Bật thông báo hoàn tất
+Library:Notify({
+    Title = "BDQ Hub x Banana",
+    Description = "Script loaded thành công! Nhấn 'H' để Ẩn/Hiện Menu.",
+    Duration = 5
 })
