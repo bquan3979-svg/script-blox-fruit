@@ -61,14 +61,14 @@ local plr = Player
 local Root = HumanoidRootPart
 
 -- ==========================================
--- LOAD UI LIBRARY (HDanh Hub)
+-- LOAD UI LIBRARY (BDQ Hub)
 -- ==========================================
 Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/hdanhhub/UI/refs/heads/main/ui_BananaHub_final.lua"))()
 
 Window = Library:CreateWindow({
-    Title = "HDanh Hub",
+    Title = "BDQ hub",
     Desc = "- Blox Fruit (Dark Edition)",
-    Image = "rbxassetid://123613996022560"
+    Image = "rbxassetid://88430712759516"
 })
 
 -- ==========================================
@@ -357,7 +357,7 @@ end)
 wait(1)
 
 Library:Notify({
-    Title = "HDanh Hub",
+    Title = "BDQ Hub",
     Description = "Đã cập nhật giao diện Dark Mode (Màu Đen) thành công!",
     Duration = 4
 })
@@ -420,10 +420,10 @@ end
 -- ==========================================
 
 -- TAB: INFO (THÔNG TIN)
-Tabs.Info:AddParagraph({ Title = "HDanh Hub", Description = "Phiên bản Blox Fruit Dark UI" })
-Tabs.Info:AddLabel("Chủ sở hữu: HDanh")
+Tabs.Info:AddParagraph({ Title = "BDQ Hub", Description = "Phiên bản Blox Fruit Dark UI" })
+Tabs.Info:AddLabel("Chủ sở hữu: BDQ")
 Tabs.Info:AddButton({ Text = "Sao chép Discord Link" }, function()
-    setclipboard("https://discord.gg/hdanhhub")
+    setclipboard("https://discord.gg/EbUHBhaCt")
     Library:Notify({ Title = "Thông báo", Description = "Đã sao chép link Discord!", Duration = 3 })
 end)
 
