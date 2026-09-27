@@ -1,8 +1,17 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hdanhhub/hdanhhub/refs/heads/main/fixlagbyhdanh.lua"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/AnhDangNhoEm/TuanAnhIOS/refs/heads/main/koby"))()
+-- ==========================================
+-- ANTI AFK
+-- ==========================================
+task.spawn(function()
+    local VirtualUser = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        VirtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+        task.wait(1)
+        VirtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+    end)
+end)
 
 -- ==========================================
--- SERVICES
+-- SERVICES & LOCAL PLAYER
 -- ==========================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,20 +21,14 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
-local VirtualUser = game:GetService("VirtualUser")
 local Lighting = game:GetService("Lighting")
-local CollectionService = game:GetService("CollectionService")
 
--- PLAYER
 local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui", 5)
+local PlayerGui = Player:WaitForChild("PlayerGui", 10)
 
--- CHARACTER
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
+-- ==========================================
 -- EXPLOIT CHECK
+-- ==========================================
 local executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or ""
 local executorName = string.lower(tostring(executor))
 
@@ -33,7 +36,7 @@ local allowedExecutors = {
     "delta", "fluxus", "fluxusz", "scriptware", "synapse x", "synapsex",
     "krnl", "arceus", "arceus x", "xeno", "swift", "volcano", "velocity",
     "comet", "sirius", "nexus", "hydrogen", "trigon", "vse", "jjsploit",
-    "wearedevs", "electron", "reckless", "sunshine", "halo", "quasar"
+    "wearedevs", "electron", "reckless", "sunshine", "halo", "quasar", "codex"
 }
 
 local validExecutor = false
@@ -45,34 +48,29 @@ for _, name in ipairs(allowedExecutors) do
 end
 
 if executorName ~= "" and not validExecutor then
-    game.Players.LocalPlayer:Kick("Please use a real executor such as Delta, Fluxus, Synapse X, ScriptWare, or KRNL.")
-else
-    print("ok")
+    Player:Kick("Vui lòng sử dụng Executor tương thích như Delta, Fluxus, Codex, KRNL, Synapse X...")
 end
 
--- ALIASES
-local ply = Players
-local replicated = ReplicatedStorage
-local RunSer = RunService
-local vim1 = VirtualInputManager
-local vim2 = VirtualUser
-local TW = TweenService
-local plr = Player
-local Root = HumanoidRootPart
+-- ==========================================
+-- TẢI THƯ VIỆN UI (BDQ Hub)
+-- ==========================================
+local success, Library = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/hdanhhub/UI/refs/heads/main/ui_BananaHub_final.lua"))()
+end)
 
--- ==========================================
--- LOAD UI LIBRARY (BDQ Hub)
--- ==========================================
-Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/hdanhhub/UI/refs/heads/main/ui_BananaHub_final.lua"))()
+if not success or type(Library) ~= "table" then
+    warn("[BDQ Hub]: Không thể tải thư viện UI. Vui lòng kiểm tra lại kết nối mạng!")
+    return
+end
 
 Window = Library:CreateWindow({
-    Title = "BDQ hub",
+    Title = "BDQ Hub",
     Desc = "- Blox Fruit (Dark Edition)",
-    Image = "rbxassetid://88430712759516"
+    Image = "rbxassetid://123613996022560"
 })
 
 -- ==========================================
--- HELPER FUNCTIONS & PROXY FOR UI
+-- HELPER FUNCTIONS & PROXY CHO UI
 -- ==========================================
 local function safeInvoke(fn, ...) 
     if type(fn) ~= "function" then return nil end
@@ -268,7 +266,7 @@ local function wrapTab(rawTab)
 end
 
 -- ==========================================
--- TẠO CÁC TABS
+-- KHỞI TẠO TABS
 -- ==========================================
 Tabs = {
     ["Info"]     = wrapTab(Window:AddTab("Thông Tin")),
@@ -289,92 +287,48 @@ Tabs = {
 }
 
 -- ==========================================
--- ĐỔI SANG THEME MÀU ĐEN (DARK MODE)
+-- THIẾT LẬP THEME MÀU ĐEN (DARK MODE)
 -- ==========================================
 pcall(function()
     if Library.SetTheme then
         Library:SetTheme({
-            Background         = Color3.fromRGB(18, 18, 20),      -- Nền đen đậm
-            Accent             = Color3.fromRGB(0, 150, 255),     -- Điểm nhấn Xanh Dương nổi bật
-            PrimaryText        = Color3.fromRGB(240, 240, 240),   -- Chữ trắng sáng
-            SecondaryText      = Color3.fromRGB(160, 160, 170),   -- Chữ xám nhạt
-            Divider            = Color3.fromRGB(35, 35, 40),      -- Đường phân cách xám tối
-            Header             = Color3.fromRGB(25, 25, 30),      -- Thanh tiêu đề
-            Box                = Color3.fromRGB(28, 28, 32),      -- Các ô chứa/mục con
-            Button             = Color3.fromRGB(35, 35, 42),      -- Nút bấm màu tối
-            Hover              = Color3.fromRGB(50, 50, 60),      -- Màu rê chuột
-            Toggle             = Color3.fromRGB(0, 150, 255),     -- Công tắc On
-            ToggleBackground   = Color3.fromRGB(30, 30, 35),      -- Công tắc Off
-            Dropdown           = Color3.fromRGB(28, 28, 32),      -- Nền Dropdown
+            Background         = Color3.fromRGB(18, 18, 20),
+            Accent             = Color3.fromRGB(0, 150, 255),
+            PrimaryText        = Color3.fromRGB(240, 240, 240),
+            SecondaryText      = Color3.fromRGB(160, 160, 170),
+            Divider            = Color3.fromRGB(35, 35, 40),
+            Header             = Color3.fromRGB(25, 25, 30),
+            Box                = Color3.fromRGB(28, 28, 32),
+            Button             = Color3.fromRGB(35, 35, 42),
+            Hover              = Color3.fromRGB(50, 50, 60),
+            Toggle             = Color3.fromRGB(0, 150, 255),
+            ToggleBackground   = Color3.fromRGB(30, 30, 35),
+            Dropdown           = Color3.fromRGB(28, 28, 32),
             DropdownBackground = Color3.fromRGB(20, 20, 24),
             Scrollbar          = Color3.fromRGB(60, 60, 70),
-            Outline            = Color3.fromRGB(45, 45, 50),      -- Viền khung
+            Outline            = Color3.fromRGB(45, 45, 50),
             Shadow             = Color3.fromRGB(0, 0, 0),
         })
     end
-
-    if Library.Theme then
-        for k, v in pairs(Library.Theme) do
-            if typeof(v) == "Color3" then
-                if k:lower():find("accent") then
-                    Library.Theme[k] = Color3.fromRGB(0, 150, 255)
-                elseif k:lower():find("back") or k:lower():find("bg") then
-                    Library.Theme[k] = Color3.fromRGB(18, 18, 20)
-                elseif k:lower():find("text") then
-                    Library.Theme[k] = Color3.fromRGB(240, 240, 240)
-                else
-                    Library.Theme[k] = Color3.fromRGB(35, 35, 40)
-                end
-            end
-        end
-    end
-
-    task.spawn(function()
-        task.wait(0.5)
-        for _, gui in pairs(PlayerGui:GetChildren()) do
-            if gui:IsA("ScreenGui") then
-                for _, desc in pairs(gui:GetDescendants()) do
-                    if desc:IsA("Frame") or desc:IsA("ScrollingFrame") then
-                        if desc.BackgroundTransparency < 1 then
-                            desc.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
-                        end
-                    elseif desc:IsA("TextButton") then
-                        desc.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-                        desc.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    elseif desc:IsA("TextLabel") then
-                        desc.TextColor3 = Color3.fromRGB(240, 240, 240)
-                    elseif desc:IsA("ImageLabel") or desc:IsA("ImageButton") then
-                        desc.ImageColor3 = Color3.fromRGB(200, 200, 200)
-                    elseif desc:IsA("UIStroke") then
-                        desc.Color = Color3.fromRGB(45, 45, 50)
-                    end
-                end
-            end
-        end
-    end)
-end)
-
-wait(1)
-
-Library:Notify({
-    Title = "BDQ Hub",
-    Description = "Đã cập nhật giao diện Dark Mode (Màu Đen) thành công!",
-    Duration = 4
-})
-
--- Anti AFK
-game:GetService("Players").LocalPlayer.Idled:connect(function()
-    game:GetService("VirtualUser"):Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-    wait()
-    game:GetService("VirtualUser"):Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
 end)
 
 -- ==========================================
--- SEA FLAGS & MONSTER DATA
+-- DỮ LIỆU CÁC BIỂN (SEA DATA)
 -- ==========================================
-Sea1 = true
-Sea2 = true
-Sea3 = true
+local PlaceId = game.PlaceId
+local Sea1, Sea2, Sea3 = false, false, false
+
+if PlaceId == 2753915549 then
+    Sea1 = true
+elseif PlaceId == 4442272183 then
+    Sea2 = true
+elseif PlaceId == 7449423635 then
+    Sea3 = true
+else
+    Sea1 = true
+end
+
+local tableMon, AreaList = {}, {}
 
 if Sea1 then
     tableMon = {
@@ -416,66 +370,54 @@ elseif Sea3 then
 end
 
 -- ==========================================
--- THÊM CÁC NÚT VÀ CẤU HÌNH VÀO TABS
+-- GIAO DIỆN CHI TIẾT TỪNG TAB
 -- ==========================================
 
--- TAB: INFO (THÔNG TIN)
+-- TAB: INFO
 Tabs.Info:AddParagraph({ Title = "BDQ Hub", Description = "Phiên bản Blox Fruit Dark UI" })
 Tabs.Info:AddLabel("Chủ sở hữu: BDQ")
 Tabs.Info:AddButton({ Text = "Sao chép Discord Link" }, function()
-    setclipboard("https://discord.gg/EbUHBhaCt")
+    setclipboard("https://discord.gg/")
     Library:Notify({ Title = "Thông báo", Description = "Đã sao chép link Discord!", Duration = 3 })
 end)
 
--- TAB: MAIN (CÀY CẤP)
+-- TAB: MAIN
 Tabs.Main:AddSection("Tự Động Cày Cấp")
 Tabs.Main:AddToggle("AutoFarmLevel", {
     Text = "Auto Farm Level",
     Default = false,
-    Callback = function(v)
-        _G.AutoLevel = v
-    end
+    Callback = function(v) _G.AutoLevel = v end
 })
-
 Tabs.Main:AddDropdown("SelectWeapon", {
     Title = "Chọn Vũ Khí",
     Values = {"Melee", "Sword", "Blox Fruit"},
     Default = "Melee",
-    Callback = function(v)
-        _G.SelectWeapon = v
-    end
+    Callback = function(v) _G.SelectWeapon = v end
 })
 
 Tabs.Main:AddSection("Tự Động Đánh Quái Chọn Lựa")
 Tabs.Main:AddDropdown("SelectMonster", {
     Title = "Chọn Quái",
-    Values = tableMon or {"Bandit"},
-    Default = tableMon and tableMon[1] or "Bandit",
-    Callback = function(v)
-        SelectMonster = v
-    end
+    Values = tableMon,
+    Default = tableMon[1] or "Bandit",
+    Callback = function(v) SelectMonster = v end
 })
-
 Tabs.Main:AddToggle("AutoFarmSelectedMonster", {
     Text = "Auto Farm Quái Đã Chọn",
     Default = false,
-    Callback = function(v)
-        _G.AutoFarmSelected = v
-    end
+    Callback = function(v) _G.AutoFarmSelected = v end
 })
 
--- TAB: SEA (SỰ KIỆN SEA)
+-- TAB: SEA
 Tabs.Sea:AddSection("Sự Kiện Biển")
 Tabs.Sea:AddToggle("AutoSeaEvent", {
     Text = "Auto Sea Event",
     Default = false,
-    Callback = function(v)
-        _G.AutoSea = v
-    end
+    Callback = function(v) _G.AutoSea = v end
 })
 
--- TAB: ITEM (VẬT PHẨM)
-Tabs.Item:AddSection("Lấy & Nâng Cấp")
+-- TAB: ITEM
+Tabs.Item:AddSection("Lấy & Nâng Cấp Võ")
 Tabs.Item:AddToggle("AutoSuperhuman", { Text = "Auto Superhuman", Default = false, Callback = function(v) _G.AutoSuperhuman = v end })
 Tabs.Item:AddToggle("AutoDeathStep", { Text = "Auto Death Step", Default = false, Callback = function(v) _G.AutoDeathStep = v end })
 Tabs.Item:AddToggle("AutoSharkmanKarate", { Text = "Auto Sharkman Karate", Default = false, Callback = function(v) _G.AutoSharkmanKarate = v end })
@@ -483,7 +425,7 @@ Tabs.Item:AddToggle("AutoElectricClaw", { Text = "Auto Electric Claw", Default =
 Tabs.Item:AddToggle("AutoDragonTalon", { Text = "Auto Dragon Talon", Default = false, Callback = function(v) _G.AutoDragonTalon = v end })
 Tabs.Item:AddToggle("AutoGodhuman", { Text = "Auto Godhuman", Default = false, Callback = function(v) _G.AutoGodhuman = v end })
 
--- TAB: STATS (CHỈ SỐ)
+-- TAB: STATS
 Tabs.Stats:AddSection("Tự Động Cộng Điểm")
 Tabs.Stats:AddToggle("StatsMelee", { Text = "Melee", Default = false, Callback = function(v) _G.StatsMelee = v end })
 Tabs.Stats:AddToggle("StatsDefense", { Text = "Defense", Default = false, Callback = function(v) _G.StatsDefense = v end })
@@ -491,30 +433,39 @@ Tabs.Stats:AddToggle("StatsSword", { Text = "Sword", Default = false, Callback =
 Tabs.Stats:AddToggle("StatsGun", { Text = "Gun", Default = false, Callback = function(v) _G.StatsGun = v end })
 Tabs.Stats:AddToggle("StatsFruit", { Text = "Blox Fruits", Default = false, Callback = function(v) _G.StatsFruit = v end })
 
--- TAB: TELEPORT (DỊCH CHUYỂN)
+-- TAB: TELEPORT
 Tabs.Teleport:AddSection("Dịch Chuyển Đảo")
 Tabs.Teleport:AddDropdown("SelectArea", {
     Title = "Chọn Đảo",
-    Values = AreaList or {"Jungle"},
-    Default = AreaList and AreaList[1] or "Jungle",
-    Callback = function(v)
-        SelectArea = v
-    end
+    Values = AreaList,
+    Default = AreaList[1] or "Jungle",
+    Callback = function(v) SelectArea = v end
 })
 Tabs.Teleport:AddButton({ Text = "Dịch Chuyển Đến Đảo" }, function()
-    print("Teleporting to " .. tostring(SelectArea))
+    Library:Notify({ Title = "Dịch Chuyển", Description = "Đang di chuyển đến " .. tostring(SelectArea), Duration = 3 })
 end)
 
--- TAB: FRUIT (TRÁI ÁC QUỶ)
+-- TAB: FRUIT
 Tabs.Fruit:AddSection("Trái Ác Quỷ")
 Tabs.Fruit:AddButton({ Text = "Mua Trái Ác Quỷ Ngẫu Nhiên (Random Fruit)" }, function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Cousin", "Buy")
+    pcall(function()
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("Cousin", "Buy")
+    end)
 end)
 Tabs.Fruit:AddToggle("AutoStoreFruit", { Text = "Auto Store Fruit", Default = true, Callback = function(v) _G.AutoStoreFruit = v end })
 
--- TAB: MISC (KHÁC)
+-- TAB: MISC
 Tabs.Misc:AddSection("Tiện Ích")
 Tabs.Misc:AddButton({ Text = "Mở Bàn Phím Sửa Lỗi Chat / Console" }, function()
     game:GetService("StarterGui"):SetCore("DevConsoleVisible", true)
 end)
 Tabs.Misc:AddToggle("RejoinOnKick", { Text = "Tự Động Kết Nối Lại Khi Bị Văng", Default = true, Callback = function(v) _G.AutoRejoin = v end })
+
+-- ==========================================
+-- THÔNG BÁO HOÀN TẤT
+-- ==========================================
+Library:Notify({
+    Title = "BDQ Hub",
+    Description = "Đã tải thành công giao diện Dark Mode!",
+    Duration = 4
+})
