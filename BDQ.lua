@@ -38,7 +38,7 @@ end
 -- ==========================================
 -- LOAD UI LIBRARY & THEME CONFIGURATION
 -- ==========================================
-Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/Library.lua"))(
+Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/Library.lua"))
 
 Window = Library:CreateWindow({
     Title = "BDQ Hub",
